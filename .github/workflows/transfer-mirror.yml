@@ -1,0 +1,152 @@
+name: Create Mirror Issue on Transfer
+
+on:
+  issues:
+    types: [transferred]
+
+jobs:
+  create-mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create mirror issue and link to private project
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.SYNC_TOKEN }}
+          script: |
+            const issue = context.payload.issue;
+            const owner = 'marconmetalnick';
+            const publicRepo = 'Test-Public';
+            const privateRepo = 'TestPrivate';
+
+            // Extract only the ## Public Description section from the body
+            const body = issue.body || '';
+            const match = body.match(/## Public Description([\s\S]*?)(?=##|$)/);
+            const publicDescription = match ? match[1].trim() : 'No public description provided.';
+
+            const mirrorBody = `## Public Description\n${publicDescription}\n\n---\n*This issue is being tracked internally. Status updates are reflected here automatically.*`;
+
+            // Create the mirror issue on the public repo
+            const mirrorIssue = await github.rest.issues.create({
+              owner,
+              repo: publicRepo,
+              title: issue.title,
+              body: mirrorBody,
+              assignees: issue.assignees.map(a => a.login)
+            });
+
+            console.log(`Mirror issue created: #${mirrorIssue.data.number}`);
+
+            // Get the public project ID (project #7)
+            const publicProjectQuery = await github.graphql(`
+              query {
+                user(login: "${owner}") {
+                  projectV2(number: 7) {
+                    id
+                    fields(first: 20) {
+                      nodes {
+                        ... on ProjectV2SingleSelectField {
+                          id
+                          name
+                          options {
+                            id
+                            name
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            `);
+
+            const publicProject = publicProjectQuery.user.projectV2;
+            const publicProjectId = publicProject.id;
+
+            // Add mirror issue to public project board
+            const addToPublicProject = await github.graphql(`
+              mutation {
+                addProjectV2ItemById(input: {
+                  projectId: "${publicProjectId}"
+                  contentId: "${mirrorIssue.data.node_id}"
+                }) {
+                  item {
+                    id
+                  }
+                }
+              }
+            `);
+
+            const publicItemId = addToPublicProject.addProjectV2ItemById.item.id;
+            console.log(`Mirror issue added to public project board`);
+
+            // Get the private project ID (project #8) and find the "Public Mirror #" field
+            const privateProjectQuery = await github.graphql(`
+              query {
+                user(login: "${owner}") {
+                  projectV2(number: 8) {
+                    id
+                    fields(first: 20) {
+                      nodes {
+                        ... on ProjectV2Field {
+                          id
+                          name
+                        }
+                        ... on ProjectV2SingleSelectField {
+                          id
+                          name
+                        }
+                      }
+                    }
+                    items(first: 50) {
+                      nodes {
+                        id
+                        content {
+                          ... on Issue {
+                            number
+                            title
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            `);
+
+            const privateProject = privateProjectQuery.user.projectV2;
+            const privateProjectId = privateProject.id;
+
+            // Find the "Public Mirror #" field on the private project
+            const mirrorField = privateProject.fields.nodes.find(f => f.name === 'Public Mirror #');
+            if (!mirrorField) {
+              console.error('Could not find "Public Mirror #" field on private project board. Please add it.');
+              return;
+            }
+
+            // Find the private project item that matches the transferred issue
+            const privateItem = privateProject.items.nodes.find(
+              item => item.content && item.content.number === issue.number
+            );
+
+            if (!privateItem) {
+              console.error('Could not find matching issue on private project board.');
+              return;
+            }
+
+            // Write the mirror issue number to the private project item
+            await github.graphql(`
+              mutation {
+                updateProjectV2ItemFieldValue(input: {
+                  projectId: "${privateProjectId}"
+                  itemId: "${privateItem.id}"
+                  fieldId: "${mirrorField.id}"
+                  value: { number: ${mirrorIssue.data.number} }
+                }) {
+                  projectV2Item {
+                    id
+                  }
+                }
+              }
+            `);
+
+            console.log(`Private project item updated with mirror issue #${mirrorIssue.data.number}`);
