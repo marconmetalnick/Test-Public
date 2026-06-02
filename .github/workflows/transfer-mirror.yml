@@ -1,15 +1,32 @@
-const result = await github.graphql(`
-  query {
-    viewer {
-      login
-      projectsV2(first: 10) {
-        nodes {
-          id
-          number
-          title
-        }
-      }
-    }
-  }
-`);
-console.log(JSON.stringify(result, null, 2));
+name: Create Mirror Issue on Transfer
+
+on:
+  issues:
+    types: [transferred]
+
+jobs:
+  create-mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Diagnose Projects V2 access
+        uses: actions/github-script@v7
+        env:
+          FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+        with:
+          github-token: ${{ secrets.SYNC_TOKEN }}
+          script: |
+            const result = await github.graphql(`
+              query {
+                viewer {
+                  login
+                  projectsV2(first: 10) {
+                    nodes {
+                      id
+                      number
+                      title
+                    }
+                  }
+                }
+              }
+            `);
+            console.log(JSON.stringify(result, null, 2));
