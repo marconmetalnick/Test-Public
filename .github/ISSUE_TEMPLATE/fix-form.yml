@@ -1,0 +1,124 @@
+name: "Bug / Fix — Something Is Broken"
+description: Use this when something in the system is not working correctly. If it worked before and now it doesn't, this is the right form.
+labels: ["fix", "bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Before you start:** This form is for things that are **broken**. If the system is working fine but you want it to work differently, use the **Change** form instead.
+
+  - type: input
+    id: submitter
+    attributes:
+      label: "Your name"
+      placeholder: "First Last"
+    validations:
+      required: true
+
+  - type: input
+    id: summary
+    attributes:
+      label: "What is broken? (one sentence)"
+      placeholder: "e.g. Clicking a link returns an error"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: department
+    attributes:
+      label: "Which department does this affect?"
+      options:
+        - Administration
+        - Detailing
+        - Engineering
+        - Finance
+        - General / Multiple Departments
+        - Health, Safety & Environment
+        - Human Resources
+        - Production - Fabrication
+        - Production - Processing
+        - Programming
+        - Purchasing
+        - Quality
+        - Receiving
+        - Sales
+        - Shipping
+    validations:
+      required: true
+
+  - type: textarea
+    id: where
+    attributes:
+      label: "Where in the system does this happen?"
+      description: Tell us which screen, button, or section you were using when you found it.
+      placeholder: |
+        1. "URL: https://axx.is/index.php"
+        2. "e.g. Finance screen → open an invoice → click Generate PDF"
+    validations:
+      required: true
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: "Screenshot"
+      description: "Paste a screenshot directly from the snip tool (Ctrl+V), or drag and drop an image file into this box. Paste or drop one at a time."
+      placeholder: "Paste (Ctrl+V) or drag and drop an image here"
+
+  - type: textarea
+    id: error_message
+    attributes:
+      label: "Error Message or Code"
+      description: "If the system showed you an error message, paste the exact text here."
+      placeholder: "Paste the error message here exactly as it appeared on screen"
+
+  - type: dropdown
+    id: impact
+    attributes:
+      label: "How badly is this affecting your work right now?"
+      options:
+        - "Can't work at all — there's no way around it"
+        - "Can still get the job done but it takes a lot longer or extra steps"
+        - "It's annoying but there's an easy workaround"
+        - "Minor issue — barely noticeable"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: frequency
+    attributes:
+      label: "How often does it happen?"
+      options:
+        - "Every single time"
+        - "Most of the time"
+        - "Occasionally — comes and goes"
+        - "Only happened once so far"
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: "How do you make it happen?"
+      description: Walk us through exactly what you were doing when the problem occurred. Step by step is really helpful here.
+      placeholder: |
+        1. I went to...
+        2. I clicked on...
+        3. I entered...
+        4. And then...
+    validations:
+      required: true
+
+  - type: textarea
+    id: what_happened
+    attributes:
+      label: "What happened, and what did you expect to happen instead?"
+      description: Describe what the system did wrong and what the correct result should have been.
+      placeholder: "The PDF only showed the first 20 items and stopped — it should have shown all 47 items across multiple pages like it used to."
+    validations:
+
+  - type: textarea
+    id: workaround
+    attributes:
+      label: "Is there any way around it for now?"
+      description: If you've found a workaround, let us know. If not, that's fine too.
+      placeholder: "We've been exporting to Excel and printing from there, but that doesn't work for client copies."
